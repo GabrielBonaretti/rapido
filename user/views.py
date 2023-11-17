@@ -1,22 +1,21 @@
-from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import AllowAny
 from rest_framework import (
     status,
-    generics
+    generics,
 )
 
 from rest_framework_simplejwt import authentication as authenticationJWT
 
 from user.serializers import UserSerializer
-from user.models import User
 from rest_framework.decorators import action
+
 
 class CreateUserView(generics.CreateAPIView):
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
-
+    
+    
 class ManagerUserAPIView(generics.RetrieveUpdateAPIView):
     """Manage for the users"""
     serializer_class = UserSerializer

@@ -6,7 +6,7 @@ from django.conf import settings
 
 urlpatterns = [
     path('create/', views.CreateUserView.as_view(), name='create_user'),
-    path('user/', views.ManagerUserAPIView.as_view(), name='user')
+    path('user/', views.ManagerUserAPIView.as_view(), name='user'),
 ]
 
 if settings.DEBUG:
