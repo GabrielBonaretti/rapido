@@ -16,7 +16,7 @@ class User(AbstractUser):
     email = models.EmailField(max_length=255, unique=True)
     url_image = models.ImageField(null=True, upload_to=user_image_field)
     password = models.CharField(max_length=255)
-    declared_salary = models.FloatField(default=0)
+    declared_salary = models.FloatField(default=0, null=True)
 
     username = None
     first_name = None
@@ -27,14 +27,14 @@ class User(AbstractUser):
 
 
 class Adress(models.Model):
-    state = models.CharField(max_length=255)
-    uf = models.CharField(max_length=2)
-    city = models.CharField(max_length=255)
-    neighborhood = models.CharField(max_length=255)
-    street = models.CharField(max_length=255)
+    state = models.CharField(max_length=255, blank=True)
+    uf = models.CharField(max_length=2, blank=True)
+    city = models.CharField(max_length=255, blank=True)
+    neighborhood = models.CharField(max_length=255, blank=True)
+    street = models.CharField(max_length=255, blank=True)
     number = models.IntegerField()
-    cep = models.CharField(max_length=8)
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    cep = models.IntegerField()
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='user')
 
 
 class Account(models.Model):
