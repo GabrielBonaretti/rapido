@@ -4,12 +4,15 @@ from rest_framework import viewsets, status, generics
 
 from rest_framework_simplejwt import authentication as authenticationJWT
 
-from user.serializers import UserSerializer, AdressSerializer
+from user.serializers import UserSerializer, AdressSerializer, AccountSerializer
 from rest_framework.decorators import action
 
 from user.models import (
-    Adress
+    Adress,
+    Account
 )
+
+import random
 
    
 class ManagerUserAPIView(generics.RetrieveUpdateAPIView):
@@ -30,7 +33,7 @@ class CreateUserView(generics.CreateAPIView):
         user_serializer = self.serializer_class(data=request.data)  # Save the user and get the instance
         user_serializer.is_valid(raise_exception=True)
         user = user_serializer.save()
-        print(user.id)
+        
         adress = {
             "state": "",
             "uf": "",
@@ -42,11 +45,28 @@ class CreateUserView(generics.CreateAPIView):
             "user": user.id
         }
         
-        print(adress)
         adress_serializer = AdressSerializer(data=adress)
         adress_serializer.is_valid(raise_exception=True)
         adress_serializer.save()
-
+        
+        number_account = ""
+        for n in range(10):
+            if n == 8:
+                number_account += '-'
+            else:
+                number_account += str(random.randint(0, 9))
+        
+        account = {
+            "number_account": number_account,
+            "agency": "0001",
+            "balance": 0,
+            "user": user.id
+        }
+        
+        account_serializer = AccountSerializer(data=account)
+        account_serializer.is_valid(raise_exception=True)
+        account_serializer.save()
+                
         return Response(status=status.HTTP_201_CREATED)
 
 
@@ -72,17 +92,40 @@ class AdressAPIView(viewsets.GenericViewSet):
             return Response(status=status.HTTP_404_NOT_FOUND)
     
 
-    @action(methods=['PUT'], detail=False, url_path="search")
-    def put_adress_by_user(self, resquest):
+    @action(methods=['PUT'], detail=True, url_path="search")
+    def put_adress_by_user(self, resquest, pk=None):
         try:
             user = self.get_object()
-            adress_upload = resquest.data
             adress = self.queryset.filter(user=int(user.pk)).first()
-            serializer = self.serializer_class(adress, adress_upload)
+            adress_upload = resquest.data
+            adress_upload['user'] = int(user.pk)            
+            serializer = self.serializer_class(adress, data=adress_upload)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
 
-            if serializer.is_valid():
-                serializer.save()
+            return Response(serializer.data)
+        except Exception as error:
+            print(error)
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
+
+class AccountAPIView(viewsets.GenericViewSet):
+    queryset = Account.objects.all()
+    serializer_class = AccountSerializer
+    authentication_classes = [authenticationJWT.JWTAuthentication]
+    
+    
+    def get_object(self):
+        """Retrieve and return a user."""
+        return self.request.user
+
+
+    @action(methods=['GET'], detail=False, url_path="search")
+    def get_adress_by_user(self, request):
+        try:
+            user = self.get_object()
+            account = self.queryset.filter(user=int(user.pk)).first()
+            serializer = self.serializer_class(account)
             return Response(serializer.data)
         except:
             return Response(status=status.HTTP_404_NOT_FOUND)

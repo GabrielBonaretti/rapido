@@ -14,7 +14,9 @@ class UserSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'email',
+            'cpf',
             'password',
+            'declared_salary',
             'url_image'
         ]
         extra_kwargs = {
@@ -34,8 +36,9 @@ class UserSerializer(serializers.ModelSerializer):
 
 class AdressSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),  # Add this line to specify the queryset
         many=False,
-        read_only=True
+        write_only=True
     )
 
     class Meta:
@@ -53,16 +56,18 @@ class AdressSerializer(serializers.ModelSerializer):
         ]
 
 
-# class AccountSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Account
-#         fields = [
-#             'id',
-#             'name',
-#             'email',
-#             'password',
-#             'url_image'
-#         ]
-#         extra_kwargs = {
-#             'password': {'write_only': True}
-#         }
+class AccountSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),  # Add this line to specify the queryset
+        many=False,
+        write_only=True
+    )
+    
+    class Meta:
+        model = Account
+        fields = [
+            'number_account',
+            'agency',
+            'balance',
+            'user'
+        ]

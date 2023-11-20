@@ -4,6 +4,8 @@ from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
+from cpf_field import models as modelcpf
+
 def user_image_field(instance, filename):
     ext = os.path.splitext(filename)[1]
     filename = f"{uuid.uuid4()}{ext}"
@@ -14,15 +16,16 @@ def user_image_field(instance, filename):
 class User(AbstractUser):
     name = models.CharField(max_length=255)
     email = models.EmailField(max_length=255, unique=True)
+    cpf = modelcpf.CPFField('cpf', unique=True, default='')
     url_image = models.ImageField(null=True, upload_to=user_image_field)
     password = models.CharField(max_length=255)
-    declared_salary = models.FloatField(default=0, null=True)
+    declared_salary = models.FloatField(default=0.00, null=True)
 
     username = None
     first_name = None
     last_name = None
 
-    USERNAME_FIELD = "email"
+    USERNAME_FIELD = "cpf"
     REQUIRED_FIELDS = []
 
 
@@ -40,7 +43,7 @@ class Adress(models.Model):
 class Account(models.Model):
     number_account = models.CharField(max_length=10, unique=True)
     agency = models.CharField(max_length=4)
-    balance = models.FloatField(default=0)
+    balance = models.FloatField(default=0.00)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 
 
