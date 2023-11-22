@@ -3,7 +3,7 @@ import uuid
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-
+from datetime import datetime
 from cpf_field import models as modelcpf
 
 def user_image_field(instance, filename):
@@ -20,7 +20,9 @@ class User(AbstractUser):
     url_image = models.ImageField(null=True, upload_to=user_image_field)
     password = models.CharField(max_length=255)
     declared_salary = models.FloatField(default=0.00, null=True)
-
+    last_try_login = models.DateTimeField(default=datetime.now)
+    count_try_login = models.IntegerField(default=0)
+    
     username = None
     first_name = None
     last_name = None
@@ -30,7 +32,6 @@ class User(AbstractUser):
 
 
 class Adress(models.Model):
-    state = models.CharField(max_length=255, blank=True)
     uf = models.CharField(max_length=2, blank=True)
     city = models.CharField(max_length=255, blank=True)
     neighborhood = models.CharField(max_length=255, blank=True)
@@ -46,17 +47,12 @@ class Account(models.Model):
     balance = models.FloatField(default=0.00)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 
-
-class TypeTransaction(models.Model):
-    type_transaction = models.CharField(max_length=255)
-
-
 class Transaction(models.Model):
     value = models.FloatField(default=0)
     description = models.CharField(max_length=255)
     account_sent = models.ForeignKey(Account, on_delete=models.DO_NOTHING, related_name="account_sent")
     account_received = models.ForeignKey(Account, on_delete=models.DO_NOTHING, related_name="account_received", null=True)
-    type_transaction = models.ForeignKey(TypeTransaction, on_delete=models.DO_NOTHING, null=True)
+    type_transaction = models.CharField(max_length=255)
     
     
 class TypeCard(models.Model):
