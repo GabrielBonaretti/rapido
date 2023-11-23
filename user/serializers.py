@@ -2,7 +2,8 @@ from rest_framework import serializers
 from user.models import (
     User,
     Adress,
-    Account
+    Account,
+    Transaction
 )
 
 from datetime import timezone
@@ -33,6 +34,15 @@ class UserSerializer(serializers.ModelSerializer):
         user.save()
         return user
     
+class UserPublicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'name',
+            'email',
+            'cpf',
+        ]    
 
 class AdressSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(
@@ -43,30 +53,39 @@ class AdressSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Adress
-        fields = [
-            'id',
-            'uf',
-            'city',
-            'neighborhood',
-            'street',
-            'number',
-            'cep',  
-            'user'
-        ]
+        fields = '__all__'
 
 
 class AccountSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(),  # Add this line to specify the queryset
-        many=False,
-        write_only=True
+        many=False
     )
     
     class Meta:
         model = Account
-        fields = [
-            'number_account',
-            'agency',
-            'balance',
-            'user'
-        ]
+        fields = '__all__'
+
+
+class AccountWithUserSerializer(serializers.ModelSerializer):
+    user = UserPublicSerializer()
+
+    class Meta:
+        model = Account
+        fields = ["id", "user", "number_account", "agency"]
+
+class TransactionSerializer(serializers.ModelSerializer):
+    account_sent = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),  # Add this line to specify the queryset
+        many=False
+    )
+
+    account_received = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),  # Add this line to specify the queryset
+        many=False
+    )
+
+    class Meta:
+        model = Transaction
+        fields = '__all__'
+    
