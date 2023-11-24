@@ -21,8 +21,6 @@ from rest_framework_simplejwt.tokens import AccessToken  # Import AccessToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import authenticate
 
-import pytz
-
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
@@ -137,7 +135,6 @@ class CreateUserView(generics.CreateAPIView):
 class AdressAPIView(viewsets.GenericViewSet):
     queryset = Adress.objects.all()
     serializer_class = AdressSerializer
-    authentication_classes = [authenticationJWT.JWTAuthentication]
 
     def get_object(self):
         """Retrieve and return a user."""
@@ -173,7 +170,6 @@ class AdressAPIView(viewsets.GenericViewSet):
 class AccountAPIView(viewsets.GenericViewSet):
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
-    authentication_classes = [authenticationJWT.JWTAuthentication]
 
     def get_object(self):
         """Retrieve and return a user."""
@@ -240,38 +236,52 @@ class AccountAPIView(viewsets.GenericViewSet):
 class TransactionAPIView(viewsets.GenericViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
-    authentication_classes = [authenticationJWT.JWTAuthentication]
 
     def get_object(self):
         """Retrieve and return a user."""
         return self.request.user
 
     def create(self, request):
-        user = self.get_object()
-        account_received = request.data.get('account_received')
-        value = request.data.get('value')
-        description = request.data.get('description')
-        type_transaction = request.data.get('type_transaction')
+        try:
+            user = self.get_object()
+            received_id = request.data.get('account_received')
+            value = request.data.get('value')
+            description = request.data.get('description')
+            type_transaction = request.data.get('type_transaction')
 
-        queryset_account = Account.objects.filter(id=user.id).first()
-        print(queryset_account.balance)
-        print(value)
-        if queryset_account.balance < value:
-            return Response(
-                    {"detail": "You don't have money to do this transaction!"},
+            sender = Account.objects.filter(id=user.id).first()
+
+            if sender.balance < value:
+                return Response(
+                    {"detail": "You do not have enough balance to make this transaction!"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            elif sender.balance <= 0:
+                return Response(
+                    {"detail": "You cannot transfer a negative amount or any amount!"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-        try:
             transaction = {
-                "account_sent": user.id,
-                "account_received": account_received,
+                "account_sent": 1,
+                "account_received": received_id,
                 "value": value,
                 "description": description,
                 "type_transaction": type_transaction
             }
 
-            print(transaction)
+            transactio_serializer = TransactionSerializer(data=transaction)
+            transactio_serializer.is_valid(raise_exception=True)
+            transactio_serializer.save()
+
+            sender.balance -= value
+            sender.save()
+
+            received = Account.objects.filter(id=received_id).first()
+            received.balance += value
+            received.save()
+
+            return Response(status=status.HTTP_201_CREATED)
 
         except Exception as error:
             print(error)

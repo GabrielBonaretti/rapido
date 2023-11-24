@@ -47,17 +47,14 @@ class Account(models.Model):
     balance = models.FloatField(default=0.00)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 
+
 class Transaction(models.Model):
     value = models.FloatField(default=0)
     description = models.CharField(max_length=255)
     account_sent = models.ForeignKey(Account, on_delete=models.DO_NOTHING, related_name="account_sent")
     account_received = models.ForeignKey(Account, on_delete=models.DO_NOTHING, related_name="account_received", null=True)
     type_transaction = models.CharField(max_length=255)
-    
-    
-class TypeCard(models.Model):
-    type_card = models.CharField(max_length=255)
-    
+
     
 class Card(models.Model):
     number = models.CharField(max_length=20)
@@ -65,7 +62,7 @@ class Card(models.Model):
     due_data = models.DateField(auto_now=False, auto_now_add=False)
     active = models.BooleanField(default=True)    
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-    type_card = models.ForeignKey(TypeCard, on_delete=models.DO_NOTHING)
+    type_card = models.CharField(max_length=50)
 
 
 class Credit(models.Model):
