@@ -323,3 +323,38 @@ class TransactionAPIView(viewsets.GenericViewSet):
         except Exception as error:
             print(error)
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+    @action(methods=['POST'], detail=False, url_path="receive")
+    def post_receive_transaction(self, request):
+        try:
+            value = float(request.data.get('value'))
+            
+            if value <= 0:
+                return Response(
+                    {"detail": "This field may not be blank!"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            user = self.get_object()
+
+            transaction = {
+                "account_sent": None, 
+                "account_received": user.id,
+                "value": value,
+                "description": "Anonymous transaction made",
+                "type_transaction": "Transfer"
+            }
+
+            transactio_serializer = TransactionSerializer(data=transaction)
+            transactio_serializer.is_valid(raise_exception=True)
+            transactio_serializer.save()
+            
+            received = Account.objects.filter(id=user.id).first()
+            received.balance += value
+            received.save()
+
+            return Response(status=status.HTTP_201_CREATED)
+
+        except Exception as error:
+            print(error)
+            return Response(status=status.HTTP_404_NOT_FOUND)

@@ -77,12 +77,14 @@ class AccountWithUserSerializer(serializers.ModelSerializer):
 class TransactionSerializer(serializers.ModelSerializer):
     account_sent = serializers.PrimaryKeyRelatedField(
         queryset=Account.objects.all(),  # Add this line to specify the queryset
-        many=False
+        many=False,
+        allow_null=True  # Allow null values for this field
     )
 
     account_received = serializers.PrimaryKeyRelatedField(
         queryset=Account.objects.all(),  # Add this line to specify the queryset
-        many=False
+        many=False,
+        allow_null=True  # Allow null values for this field
     )
 
     class Meta:

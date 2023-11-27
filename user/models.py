@@ -6,6 +6,7 @@ from django.contrib.auth.models import AbstractUser
 from datetime import datetime
 from cpf_field import models as modelcpf
 
+
 def user_image_field(instance, filename):
     ext = os.path.splitext(filename)[1]
     filename = f"{uuid.uuid4()}{ext}"
@@ -22,7 +23,7 @@ class User(AbstractUser):
     declared_salary = models.FloatField(default=0.00, null=True)
     last_try_login = models.DateTimeField(default=datetime.now)
     count_try_login = models.IntegerField(default=0)
-    
+
     username = None
     first_name = None
     last_name = None
@@ -38,7 +39,8 @@ class Adress(models.Model):
     street = models.CharField(max_length=255, blank=True)
     number = models.IntegerField()
     cep = models.IntegerField()
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='user')
+    user = models.ForeignKey(
+        User, on_delete=models.DO_NOTHING, related_name='user')
 
 
 class Account(models.Model):
@@ -51,17 +53,19 @@ class Account(models.Model):
 class Transaction(models.Model):
     value = models.FloatField(default=0)
     description = models.CharField(max_length=255, blank=True)
-    account_sent = models.ForeignKey(Account, on_delete=models.DO_NOTHING, related_name="account_sent")
-    account_received = models.ForeignKey(Account, on_delete=models.DO_NOTHING, related_name="account_received", null=True)
+    account_sent = models.ForeignKey(
+        Account, on_delete=models.DO_NOTHING, related_name="account_sent", null=True, default=None)
+    account_received = models.ForeignKey(
+        Account, on_delete=models.DO_NOTHING, related_name="account_received", null=True)
     create = models.DateTimeField(default=datetime.now)
     type_transaction = models.CharField(max_length=255)
 
-    
+
 class Card(models.Model):
     number = models.CharField(max_length=20)
     cvv = models.CharField(max_length=3)
     due_data = models.DateField(auto_now=False, auto_now_add=False)
-    active = models.BooleanField(default=True)    
+    active = models.BooleanField(default=True)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     type_card = models.CharField(max_length=50)
 
@@ -73,8 +77,8 @@ class Credit(models.Model):
     approved = models.BooleanField(default=True)
     observation = models.CharField(max_length=255)
     credit_card = models.ForeignKey(Card, on_delete=models.DO_NOTHING)
-    
-    
+
+
 class CreditParcel(models.Model):
     numberParcels = models.IntegerField()
     value_parcel = models.FloatField()
@@ -82,8 +86,8 @@ class CreditParcel(models.Model):
     value_paid = models.FloatField()
     paid_date = models.DateField(auto_now=False, auto_now_add=False)
     credit = models.ForeignKey(Credit, on_delete=models.DO_NOTHING)
-    
-    
+
+
 class Loan(models.Model):
     valueLoan = models.FloatField()
     fees = models.DecimalField(max_digits=5, decimal_places=4)
@@ -91,8 +95,8 @@ class Loan(models.Model):
     approved = models.BooleanField(default=True)
     observation = models.CharField(max_length=255)
     account = models.ForeignKey(Account, on_delete=models.DO_NOTHING)
-    
-    
+
+
 class LoanParcel(models.Model):
     numberParcels = models.IntegerField()
     value_parcel = models.FloatField()
