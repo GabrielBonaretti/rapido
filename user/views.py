@@ -1,11 +1,24 @@
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework import viewsets, status, generics
+from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.decorators import action
 
 from rest_framework_simplejwt import authentication as authenticationJWT
+from rest_framework_simplejwt.tokens import AccessToken  # Import AccessToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
-from user.serializers import UserSerializer, AdressSerializer, AccountSerializer, AccountWithUserSerializer, TransactionSerializer
-from rest_framework.decorators import action
+from django.contrib.auth import authenticate
+from django.db.models import Q
+
+from user.serializers import (
+    UserSerializer,
+    AdressSerializer,
+    AccountSerializer,
+    AccountWithUserSerializer,
+    TransactionSerializer,
+    TransactionGetSerializer
+)
 
 from user.models import (
     User,
@@ -15,11 +28,8 @@ from user.models import (
 )
 
 import random
-from datetime import datetime, timedelta, timezone
 
-from rest_framework_simplejwt.tokens import AccessToken  # Import AccessToken
-from rest_framework_simplejwt.views import TokenObtainPairView
-from django.contrib.auth import authenticate
+from datetime import datetime, timedelta, timezone
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -37,6 +47,13 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
         default_format_date = '%Y-%m-%d %H:%M:%S'
         now_try_string = datetime.strftime(datetime.now(), default_format_date)
+
+        if user is None:
+            return Response(
+                {"detail": "No active account found with the given credentials"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
         last_try_string = datetime.strftime(
             user.last_try_login, default_format_date)
         difference = (datetime.strptime(now_try_string, default_format_date) -
@@ -263,7 +280,7 @@ class TransactionAPIView(viewsets.GenericViewSet):
                 )
 
             transaction = {
-                "account_sent": 1,
+                "account_sent": user.id,
                 "account_received": received_id,
                 "value": value,
                 "description": description,
@@ -283,6 +300,26 @@ class TransactionAPIView(viewsets.GenericViewSet):
 
             return Response(status=status.HTTP_201_CREATED)
 
+        except Exception as error:
+            print(error)
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+    @action(methods=['GET'], detail=False, url_path="search")
+    def get_all_transactions_related_me(self, request):
+        paginator = LimitOffsetPagination()
+
+        try:
+            user = self.get_object()
+            transactions = Transaction.objects.filter(
+                Q(account_sent=user.id) | Q(account_received=user.id)).order_by('-create')
+
+            paginated_queryset = paginator.paginate_queryset(
+                transactions, request)
+
+            serializer = TransactionGetSerializer(
+                paginated_queryset, many=True)
+
+            return paginator.get_paginated_response(serializer.data)
         except Exception as error:
             print(error)
             return Response(status=status.HTTP_404_NOT_FOUND)

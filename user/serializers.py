@@ -89,3 +89,24 @@ class TransactionSerializer(serializers.ModelSerializer):
         model = Transaction
         fields = '__all__'
     
+    
+class UserForTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["name"]
+        
+class AccountForTransactionSerialzier(serializers.ModelSerializer):
+    user = UserForTransactionSerializer()
+
+    class Meta:
+        model = Account
+        fields = ["user"]
+
+class TransactionGetSerializer(serializers.ModelSerializer):
+    account_sent = AccountForTransactionSerialzier()
+    account_received = AccountForTransactionSerialzier()
+
+    class Meta:
+        model = Transaction
+        fields = '__all__'
+    
