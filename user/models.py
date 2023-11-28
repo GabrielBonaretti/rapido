@@ -50,24 +50,41 @@ class Account(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 
 
+class Card(models.Model):
+    number = models.CharField(max_length=20)
+    cvv = models.CharField(max_length=3)
+    due_data = models.DateTimeField(auto_now=False, auto_now_add=False)
+    active = models.BooleanField(default=True)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    type_card = models.CharField(max_length=50)
+
+
 class Transaction(models.Model):
     value = models.FloatField(default=0)
     description = models.CharField(max_length=255, blank=True)
     account_sent = models.ForeignKey(
-        Account, on_delete=models.DO_NOTHING, related_name="account_sent", null=True, default=None)
+        Account,
+        on_delete=models.DO_NOTHING,
+        related_name="account_sent",
+        null=True,
+        default=None
+    )
+
     account_received = models.ForeignKey(
-        Account, on_delete=models.DO_NOTHING, related_name="account_received", null=True)
+        Account,
+        on_delete=models.DO_NOTHING,
+        related_name="account_received",
+        null=True
+    )
     create = models.DateTimeField(default=datetime.now)
     type_transaction = models.CharField(max_length=255)
-
-
-class Card(models.Model):
-    number = models.CharField(max_length=20)
-    cvv = models.CharField(max_length=3)
-    due_data = models.DateField(auto_now=False, auto_now_add=False)
-    active = models.BooleanField(default=True)
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-    type_card = models.CharField(max_length=50)
+    card = models.ForeignKey(
+        Card, 
+        on_delete=models.DO_NOTHING,
+        related_name="card",
+        null=True,
+        default=None
+    )
 
 
 class Credit(models.Model):

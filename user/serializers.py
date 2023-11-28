@@ -3,10 +3,12 @@ from user.models import (
     User,
     Adress,
     Account,
-    Transaction
+    Transaction,
+    Card
 )
 
 from datetime import timezone
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -27,13 +29,14 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         password = validated_data.pop('password', None)
         user = self.Meta.model(**validated_data)
-        
+
         if password is not None:
             user.set_password(password)
 
         user.save()
         return user
-    
+
+
 class UserPublicSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -42,7 +45,8 @@ class UserPublicSerializer(serializers.ModelSerializer):
             'name',
             'email',
             'cpf',
-        ]    
+        ]
+
 
 class AdressSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(
@@ -61,7 +65,7 @@ class AccountSerializer(serializers.ModelSerializer):
         queryset=User.objects.all(),  # Add this line to specify the queryset
         many=False
     )
-    
+
     class Meta:
         model = Account
         fields = '__all__'
@@ -74,35 +78,44 @@ class AccountWithUserSerializer(serializers.ModelSerializer):
         model = Account
         fields = ["id", "user", "number_account", "agency"]
 
+
 class TransactionSerializer(serializers.ModelSerializer):
     account_sent = serializers.PrimaryKeyRelatedField(
-        queryset=Account.objects.all(),  # Add this line to specify the queryset
+        queryset=Account.objects.all(),
         many=False,
-        allow_null=True  # Allow null values for this field
+        allow_null=True
     )
 
     account_received = serializers.PrimaryKeyRelatedField(
-        queryset=Account.objects.all(),  # Add this line to specify the queryset
+        queryset=Account.objects.all(),
         many=False,
-        allow_null=True  # Allow null values for this field
+        allow_null=True
+    )
+
+    card = serializers.PrimaryKeyRelatedField(
+        queryset=Card.objects.all(),
+        many=False,
+        allow_null=True
     )
 
     class Meta:
         model = Transaction
         fields = '__all__'
-    
-    
+
+
 class UserForTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["name"]
-        
+
+
 class AccountForTransactionSerialzier(serializers.ModelSerializer):
     user = UserForTransactionSerializer()
 
     class Meta:
         model = Account
         fields = ["user"]
+
 
 class TransactionGetSerializer(serializers.ModelSerializer):
     account_sent = AccountForTransactionSerialzier()
@@ -111,4 +124,14 @@ class TransactionGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = '__all__'
-    
+
+
+class CardSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),  # Add this line to specify the queryset
+        many=False
+    )
+
+    class Meta:
+        model = Card
+        fields = '__all__'
