@@ -309,6 +309,7 @@ class TransactionAPIView(viewsets.GenericViewSet):
             transaction = {
                 "account_sent": user.id,
                 "account_received": received_id,
+                "card": None,
                 "value": value,
                 "description": description,
                 "type_transaction": type_transaction
