@@ -462,6 +462,8 @@ class CardAPIView(viewsets.GenericViewSet):
 
     @action(methods=['GET'], detail=True, url_path="transactions")
     def list_transactions_by_card(self, request, pk: int = None):
+        paginator = LimitOffsetPagination()
+
         user = self.get_object()
         card = self.queryset.filter(user=int(user.id)).filter(
             id=pk).filter(active=True)
@@ -470,9 +472,11 @@ class CardAPIView(viewsets.GenericViewSet):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         transactions = Transaction.objects.filter(card=pk).all()
+        paginated_queryset = paginator.paginate_queryset(
+                        transactions, request)
 
-        serializer = TransactionSerializer(transactions, many=True)
-        return Response(serializer.data)
+        serializer = TransactionGetSerializer(paginated_queryset, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     @action(methods=['GET'], detail=True, url_path="block")
     def block_card(self, request, pk: int = None):
