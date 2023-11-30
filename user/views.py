@@ -78,8 +78,9 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         if user_auth is None:
             if difference < timedelta(minutes=1) and user.count_try_login < 2:
                 user.count_try_login += 1
+            else:
+                user.count_try_login = 0
 
-            print(datetime.utcnow().isoformat() + 'Z')
             user.last_try_login = datetime.now()
 
             user.save()
@@ -471,7 +472,7 @@ class CardAPIView(viewsets.GenericViewSet):
         if not card:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        transactions = Transaction.objects.filter(card=pk).all()
+        transactions = Transaction.objects.filter(card=pk).all().order_by('-create')
         paginated_queryset = paginator.paginate_queryset(
                         transactions, request)
 
