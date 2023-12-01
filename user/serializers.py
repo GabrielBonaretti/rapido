@@ -4,7 +4,9 @@ from user.models import (
     Adress,
     Account,
     Transaction,
-    Card
+    Card,
+    Credit,
+    CreditParcel
 )
 
 from datetime import timezone
@@ -134,4 +136,16 @@ class CardSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Card
+        fields = '__all__'
+
+
+class CreditSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Credit
+        fields = '__all__'
+
+
+class CreditParcelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CreditParcel
         fields = '__all__'

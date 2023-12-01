@@ -53,7 +53,7 @@ class Account(models.Model):
 class Card(models.Model):
     number = models.CharField(max_length=20)
     cvv = models.CharField(max_length=3)
-    due_data = models.DateTimeField(auto_now=False, auto_now_add=False)
+    due_data = models.DateField(auto_now=False, auto_now_add=False)
     active = models.BooleanField(default=True)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     type_card = models.CharField(max_length=50)
@@ -79,7 +79,7 @@ class Transaction(models.Model):
     create = models.DateTimeField(default=datetime.now)
     type_transaction = models.CharField(max_length=255)
     card = models.ForeignKey(
-        Card, 
+        Card,
         on_delete=models.DO_NOTHING,
         related_name="card",
         null=True,
@@ -89,19 +89,19 @@ class Transaction(models.Model):
 
 class Credit(models.Model):
     valueTotal = models.FloatField()
-    fees = models.DecimalField(max_digits=5, decimal_places=4)
     numberTotalParcels = models.IntegerField()
-    approved = models.BooleanField(default=True)
-    observation = models.CharField(max_length=255)
+    numberPayedParcels = models.IntegerField(default=0)
+    observation = models.CharField(max_length=255, blank=True)
     credit_card = models.ForeignKey(Card, on_delete=models.DO_NOTHING)
 
 
 class CreditParcel(models.Model):
-    numberParcels = models.IntegerField()
+    number_parcel = models.IntegerField()
     value_parcel = models.FloatField()
     due_date = models.DateField(auto_now=False, auto_now_add=False)
-    value_paid = models.FloatField()
-    paid_date = models.DateField(auto_now=False, auto_now_add=False)
+    paid = models.BooleanField(default=False)
+    paid_date = models.DateField(
+        auto_now=False, auto_now_add=False, null=True, default=None)
     credit = models.ForeignKey(Credit, on_delete=models.DO_NOTHING)
 
 
@@ -118,6 +118,7 @@ class LoanParcel(models.Model):
     numberParcels = models.IntegerField()
     value_parcel = models.FloatField()
     due_date = models.DateField(auto_now=False, auto_now_add=False)
-    value_paid = models.FloatField()
-    paid_date = models.DateField(auto_now=False, auto_now_add=False)
+    paid = models.BooleanField(default=False)
+    paid_date = models.DateField(
+        auto_now=False, auto_now_add=False, default=None)
     loan = models.ForeignKey(Loan, on_delete=models.DO_NOTHING)
