@@ -6,7 +6,9 @@ from user.models import (
     Transaction,
     Card,
     Credit,
-    CreditParcel
+    CreditParcel,
+    Loan,
+    LoanParcel
 )
 
 from datetime import timezone
@@ -140,12 +142,49 @@ class CardSerializer(serializers.ModelSerializer):
 
 
 class CreditSerializer(serializers.ModelSerializer):
+    credit_card = serializers.PrimaryKeyRelatedField(
+        queryset=Card.objects.all(),  # Add this line to specify the queryset
+        many=False
+    )
+
+    account_received = serializers.PrimaryKeyRelatedField(
+        queryset=Account.objects.all(),  # Add this line to specify the queryset
+        many=False
+    )
+    
     class Meta:
         model = Credit
         fields = '__all__'
 
 
 class CreditParcelSerializer(serializers.ModelSerializer):
+    credit = serializers.PrimaryKeyRelatedField(
+        queryset=Credit.objects.all(),  # Add this line to specify the queryset
+        many=False
+    )
+    
     class Meta:
         model = CreditParcel
+        fields = '__all__'
+        
+
+class LoanSerializer(serializers.ModelSerializer):
+    account = serializers.PrimaryKeyRelatedField(
+        queryset=Account.objects.all(),
+        many=False
+    )
+    
+    class Meta:
+        model = Loan
+        fields = '__all__'
+
+
+class LoanParcelSerializer(serializers.ModelSerializer):
+    loan = serializers.PrimaryKeyRelatedField(
+        queryset=Loan.objects.all(),
+        many=False
+    )
+    
+    class Meta:
+        model = LoanParcel
         fields = '__all__'

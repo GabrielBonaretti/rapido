@@ -21,7 +21,9 @@ from user.serializers import (
     TransactionGetSerializer,
     CardSerializer,
     CreditSerializer,
-    CreditParcelSerializer
+    CreditParcelSerializer,
+    LoanSerializer,
+    LoanParcelSerializer
 )
 
 from user.models import (
@@ -31,7 +33,9 @@ from user.models import (
     Transaction,
     Card,
     Credit,
-    CreditParcel
+    CreditParcel,
+    Loan,
+    LoanParcel
 )
 
 import random
@@ -498,7 +502,7 @@ class CardAPIView(viewsets.GenericViewSet):
         return Response(status=status.HTTP_200_OK)
 
     @action(methods=['POST'], detail=False, url_path="new")
-    def create_new_credit_card(self, request):
+    def create_new_card(self, request):
         user = self.get_object()
         type_card = request.data.get('type_card')
 
@@ -559,6 +563,7 @@ class CreditAPIView(viewsets.GenericViewSet):
         valueTotal = request.data.get('valueTotal')
         numberTotalParcels = request.data.get('numberTotalParcels')
         observation = request.data.get('observation')
+        receiver_id = request.data.get('account_received')
 
         card = Card.objects.filter(user=int(user.id)).filter(
             type_card="Credit").filter(active=True).first()
@@ -573,7 +578,8 @@ class CreditAPIView(viewsets.GenericViewSet):
             "valueTotal": valueTotal,
             "numberTotalParcels": numberTotalParcels,
             "observation": observation,
-            "credit_card": card.id
+            "credit_card": card.id,
+            "account_received": receiver_id
         }
 
         serializer = self.get_serializer(data=credit)
@@ -599,6 +605,21 @@ class CreditAPIView(viewsets.GenericViewSet):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    def list(self, request):
+        user = self.get_object()
+        card = Card.objects.filter(user=int(user.id)).filter(
+            type_card="Credit").filter(active=True).first()
+
+        if not card:
+            return Response(
+                {"detail": "You do not have a credit card!"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        credit = Credit.objects.filter(credit_card=card.id).all()
+        serializer = CreditSerializer(credit, many=True)
+        return Response(serializer.data)
+
 
 class CreditParcelAPIView(viewsets.GenericViewSet):
     queryset = CreditParcel.objects.all()
@@ -609,7 +630,7 @@ class CreditParcelAPIView(viewsets.GenericViewSet):
         return self.request.user
 
     @action(methods=['GET'], detail=True, url_path="all")
-    def get_parcel_by_redit(self, request, pk=None):
+    def get_parcel_by_credit(self, request, pk=None):
         user = self.get_object()
         card = Card.objects.filter(user=int(user.id)).filter(
             type_card="Credit").filter(active=True).first()
@@ -617,10 +638,216 @@ class CreditParcelAPIView(viewsets.GenericViewSet):
 
         if not credit:
             return Response(
-                {"detail": "No active account found with the given credentials"},
+                {"detail": "Something was wrong"},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
         queryset = CreditParcel.objects.filter(credit=pk)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+    @action(methods=['GET'], detail=True, url_path="paid")
+    def paid_credit_parcel(self, request, pk=None):
+        user = self.get_object()
+        card = Card.objects.filter(user=int(user.id)).filter(
+            type_card="Credit").filter(active=True).first()
+        parcel_credit = CreditParcel.objects.filter(id=pk).first()
+        credit = Credit.objects.filter(id=parcel_credit.credit.id).filter(
+            credit_card=card.id).first()
+
+        if parcel_credit.paid:
+            return Response(
+                {"detail": "This parcel is already paid"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        elif credit:
+            transaction = {
+                "account_sent": user.id,
+                "account_received": credit.account_received.id,
+                "card": card.id,
+                "value": parcel_credit.value_parcel,
+                "description": "Paid value credit parcel",
+                "type_transaction": "Credit card"
+            }
+
+            transaction_serializer = TransactionSerializer(data=transaction)
+            transaction_serializer.is_valid(raise_exception=True)
+            transaction_serializer.save()
+
+            sender = Account.objects.filter(id=user.id).first()
+            sender.balance -= parcel_credit.value_parcel
+            sender.save()
+
+            received = Account.objects.filter(
+                id=credit.account_received.id).first()
+            received.balance += parcel_credit.value_parcel
+            received.save()
+
+            parcel_credit.paid = True
+            parcel_credit.paid_date = timezone.localdate()
+            parcel_credit.save()
+
+            credit.numberPayedParcels += 1
+            credit.save()
+            return Response(
+                {"detail": "You paid this parcel"},
+                status=status.HTTP_200_OK
+            )
+        else:
+            return Response(
+                {"detail": "Something wrong happened"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+
+class LoanAPIView(viewsets.GenericViewSet):
+    queryset = Loan.objects.all()
+    serializer_class = LoanSerializer
+
+    def get_object(self):
+        """Retrieve and return a user."""
+        return self.request.user
+
+    def create(self, request):
+        user = self.get_object()
+        account = Account.objects.filter(user=user.id).first()
+
+        value_loan = request.data.get('valueLoan')
+        number_total_parcels = request.data.get('numberTotalParcels')
+        observation = request.data.get('observation')
+
+        value_parcel = (value_loan / number_total_parcels) * 1.05
+
+        print(user.declared_salary * 0.4)
+        print(value_parcel)
+        if not user.declared_salary * 5 >= value_loan or not user.declared_salary * 0.4 >= value_parcel:
+            return Response(
+                {"detail": "Your loan request was not approved."},
+                status=status.HTTP_201_CREATED
+            )
+
+        transaction = {
+            "account_sent": None,
+            "account_received": user.id,
+            "card": None,
+            "value": value_loan,
+            "description": "Loan received",
+            "type_transaction": "Loan"
+        }
+
+        transaction_serializer = TransactionSerializer(data=transaction)
+        transaction_serializer.is_valid(raise_exception=True)
+        transaction_serializer.save()
+
+        account.balance += value_loan
+        account.save()
+
+        loan = {
+            "account": account.id,
+            "valueLoan": value_loan,
+            "numberTotalParcels": number_total_parcels,
+            "observation": observation
+        }
+
+        serializer = self.get_serializer(data=loan)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        loan_object = Loan.objects.latest("id")
+        for i in range(number_total_parcels):
+            current_date = timezone.localdate()
+            new_date = current_date + relativedelta(months=(i+1))
+
+            loan_parcel = {
+                "number_parcel": i+1,
+                "value_parcel": value_parcel,
+                "due_date": new_date.replace(day=15),
+                "loan": loan_object.id
+            }
+
+            serializer_parcel = LoanParcelSerializer(data=loan_parcel)
+            serializer_parcel.is_valid(raise_exception=True)
+            serializer_parcel.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def list(self, request):
+        user = self.get_object()
+        account = Account.objects.filter(user=user.id).first()
+        loan = Loan.objects.filter(account=account.id).all()
+        serializer = LoanSerializer(loan, many=True)
+        return Response(serializer.data)
+
+class LoanParcelAPIView(viewsets.GenericViewSet):
+    queryset = LoanParcel.objects.all()
+    serializer_class = LoanParcelSerializer
+
+    def get_object(self):
+        """Retrieve and return a user."""
+        return self.request.user
+
+    @action(methods=['GET'], detail=True, url_path="all")
+    def get_parcel_by_loan(self, request, pk=None):
+        user = self.get_object()
+        account = Account.objects.filter(user=user.id).first()
+        loan = Loan.objects.filter(account=account.id).filter(id=pk).first()
+        
+        if not loan:
+            return Response(
+                {"detail": "Something was wrong"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+            
+        queryset = LoanParcel.objects.filter(loan=pk)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(methods=['GET'], detail=True, url_path="paid")
+    def paid_loan_parcel(self, request, pk=None):
+        user = self.get_object()
+        account = Account.objects.filter(user=user.id).first()
+        parcel_loan = LoanParcel.objects.filter(id=pk).first()
+        loan = Loan.objects.filter(id=parcel_loan.loan.id).first()
+
+        if account.id != loan.account.id:
+            return Response(
+                {"detail": "Something was wrong"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )  
+        
+        if parcel_loan.paid:
+            return Response(
+                {"detail": "This parcel is already paid"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        else:
+            transaction = {
+                "account_sent": user.id,
+                "account_received": None,
+                "card": None,
+                "value": parcel_loan.value_parcel,
+                "description": "Paid value loan parcel",
+                "type_transaction": "Loan"
+            }
+
+            transaction_serializer = TransactionSerializer(data=transaction)
+            transaction_serializer.is_valid(raise_exception=True)
+            transaction_serializer.save()
+
+            sender = Account.objects.filter(id=user.id).first()
+            sender.balance -= parcel_loan.value_parcel
+            sender.save()
+
+
+            parcel_loan.paid = True
+            parcel_loan.paid_date = timezone.localdate()
+            parcel_loan.save()
+
+            loan.numberPayedParcels += 1
+            loan.save()
+            
+            return Response(
+                {"detail": "You paid this parcel"},
+                status=status.HTTP_200_OK
+            )
+

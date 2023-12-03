@@ -11,6 +11,8 @@ router.register('transaction', views.TransactionAPIView)
 router.register('card', views.CardAPIView)
 router.register('credit', views.CreditAPIView)
 router.register('parcelsCredit', views.CreditParcelAPIView)
+router.register('loan', views.LoanAPIView)
+router.register('parcelsLoan', views.LoanParcelAPIView)
 
 urlpatterns = [
     path('create/', views.CreateUserView.as_view(), name='create_user'),

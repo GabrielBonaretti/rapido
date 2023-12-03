@@ -93,6 +93,7 @@ class Credit(models.Model):
     numberPayedParcels = models.IntegerField(default=0)
     observation = models.CharField(max_length=255, blank=True)
     credit_card = models.ForeignKey(Card, on_delete=models.DO_NOTHING)
+    account_received = models.ForeignKey(Account, on_delete=models.DO_NOTHING, null=True)
 
 
 class CreditParcel(models.Model):
@@ -107,18 +108,17 @@ class CreditParcel(models.Model):
 
 class Loan(models.Model):
     valueLoan = models.FloatField()
-    fees = models.DecimalField(max_digits=5, decimal_places=4)
     numberTotalParcels = models.IntegerField()
-    approved = models.BooleanField(default=True)
+    numberPayedParcels = models.IntegerField(default=0)
     observation = models.CharField(max_length=255)
     account = models.ForeignKey(Account, on_delete=models.DO_NOTHING)
 
 
 class LoanParcel(models.Model):
-    numberParcels = models.IntegerField()
+    number_parcel = models.IntegerField()
     value_parcel = models.FloatField()
     due_date = models.DateField(auto_now=False, auto_now_add=False)
     paid = models.BooleanField(default=False)
     paid_date = models.DateField(
-        auto_now=False, auto_now_add=False, default=None)
+        auto_now=False, auto_now_add=False, null=True, default=None)
     loan = models.ForeignKey(Loan, on_delete=models.DO_NOTHING)
