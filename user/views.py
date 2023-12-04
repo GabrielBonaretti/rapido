@@ -617,7 +617,7 @@ class CreditAPIView(viewsets.GenericViewSet):
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-        credit = Credit.objects.filter(credit_card=card.id).all()
+        credit = Credit.objects.filter(credit_card=card.id).all().order_by('-id')
         serializer = CreditGetSerializer(credit, many=True)
         return Response(serializer.data)
 
