@@ -45,7 +45,13 @@ INSTALLED_APPS = [
     'cpf_field',
     'corsheaders',
 
-    'user'
+    'user',
+    'account',
+    'adress',
+    'card',
+    'credit',
+    'loan',
+    'transaction'
 ]
 
 MIDDLEWARE = [
