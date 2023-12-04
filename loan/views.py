@@ -2,6 +2,8 @@ from rest_framework.response import Response
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 
+from drf_spectacular.utils import extend_schema
+
 from django.utils import timezone
 
 from dateutil.relativedelta import relativedelta
@@ -15,6 +17,7 @@ from transaction.serializers import TransactionSerializer
 
 # Create your views here.
 
+@extend_schema(tags=['Loan'])
 class LoanAPIView(viewsets.GenericViewSet):
     queryset = Loan.objects.all()
     serializer_class = LoanSerializer
@@ -93,6 +96,8 @@ class LoanAPIView(viewsets.GenericViewSet):
         serializer = LoanSerializer(loan, many=True)
         return Response(serializer.data)
 
+
+@extend_schema(tags=['Loan'])
 class LoanParcelAPIView(viewsets.GenericViewSet):
     queryset = LoanParcel.objects.all()
     serializer_class = LoanParcelSerializer

@@ -3,18 +3,22 @@ from rest_framework import viewsets, status
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.decorators import action
 
+from drf_spectacular.utils import extend_schema
+
 from django.utils import timezone
 
 from card.models import Card
 from card.serializers import CardSerializer
 
 from transaction.models import Transaction
+from transaction.serializers import TransactionGetSerializer
 
 import random
 
 # Create your views here.
 
 
+@extend_schema(tags=['Card'])
 class CardAPIView(viewsets.GenericViewSet):
     queryset = Card.objects.all()
     serializer_class = CardSerializer

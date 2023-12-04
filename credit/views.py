@@ -2,6 +2,8 @@ from rest_framework.response import Response
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 
+from drf_spectacular.utils import extend_schema
+
 from django.utils import timezone
 
 from dateutil.relativedelta import relativedelta
@@ -17,7 +19,7 @@ from account.models import Account
 
 # Create your views here.
 
-
+@extend_schema(tags=['Credit'])
 class CreditAPIView(viewsets.GenericViewSet):
     queryset = Credit.objects.all()
     serializer_class = CreditSerializer
@@ -90,6 +92,7 @@ class CreditAPIView(viewsets.GenericViewSet):
         return Response(serializer.data)
 
 
+@extend_schema(tags=['Credit'])
 class CreditParcelAPIView(viewsets.GenericViewSet):
     queryset = CreditParcel.objects.all()
     serializer_class = CreditParcelSerializer

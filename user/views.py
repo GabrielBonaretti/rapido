@@ -6,6 +6,8 @@ from rest_framework_simplejwt import authentication as authenticationJWT
 from rest_framework_simplejwt.tokens import AccessToken  # Import AccessToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from drf_spectacular.utils import extend_schema
+
 from django.contrib.auth import authenticate
 from django.utils import timezone
 
@@ -22,7 +24,7 @@ import random
 
 from datetime import datetime, timedelta
 
-
+@extend_schema(tags=['User'])
 class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         cpf = request.data.get('cpf')
@@ -86,6 +88,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         return Response(token_data, status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=['User'])
 class ManagerUserAPIView(generics.RetrieveUpdateAPIView):
     """Manage for the users"""
     serializer_class = UserSerializer
@@ -96,6 +99,7 @@ class ManagerUserAPIView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 
+@extend_schema(tags=['User'])
 class CreateUserView(generics.CreateAPIView):
     serializer_class = UserSerializer
     permission_classes = [AllowAny]

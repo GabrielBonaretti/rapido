@@ -3,6 +3,8 @@ from rest_framework import viewsets, status
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.decorators import action
 
+from drf_spectacular.utils import extend_schema
+
 from django.db.models import Q
 
 from transaction.models import Transaction
@@ -14,6 +16,7 @@ from card.models import Card
 
 # Create your views here.
 
+@extend_schema(tags=['Transactions'])
 class TransactionAPIView(viewsets.GenericViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer

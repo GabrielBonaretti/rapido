@@ -2,6 +2,8 @@ from rest_framework.response import Response
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 
+from drf_spectacular.utils import extend_schema
+
 from account.models import Account
 from account.serializers import AccountSerializer, AccountWithUserSerializer
 
@@ -9,6 +11,7 @@ from user.models import User
 
 # Create your views here.
 
+@extend_schema(tags=['Account'])
 class AccountAPIView(viewsets.GenericViewSet):
     queryset = Account.objects.all()
     serializer_class = AccountSerializer

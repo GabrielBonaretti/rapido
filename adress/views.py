@@ -2,11 +2,14 @@ from rest_framework.response import Response
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 
+from drf_spectacular.utils import extend_schema
+
 from adress.models import Adress
 from adress.serializers import AdressSerializer
 
 # Create your views here.
 
+@extend_schema(tags=['Adress'])
 class AdressAPIView(viewsets.GenericViewSet):
     queryset = Adress.objects.all()
     serializer_class = AdressSerializer
