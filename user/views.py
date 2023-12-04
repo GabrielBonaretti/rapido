@@ -21,6 +21,7 @@ from user.serializers import (
     TransactionGetSerializer,
     CardSerializer,
     CreditSerializer,
+    CreditGetSerializer,
     CreditParcelSerializer,
     LoanSerializer,
     LoanParcelSerializer
@@ -617,7 +618,7 @@ class CreditAPIView(viewsets.GenericViewSet):
             )
 
         credit = Credit.objects.filter(credit_card=card.id).all()
-        serializer = CreditSerializer(credit, many=True)
+        serializer = CreditGetSerializer(credit, many=True)
         return Response(serializer.data)
 
 

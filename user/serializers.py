@@ -155,6 +155,18 @@ class CreditSerializer(serializers.ModelSerializer):
     class Meta:
         model = Credit
         fields = '__all__'
+        
+class CreditGetSerializer(serializers.ModelSerializer):
+    credit_card = serializers.PrimaryKeyRelatedField(
+        queryset=Card.objects.all(),  # Add this line to specify the queryset
+        many=False
+    )
+
+    account_received = AccountForTransactionSerialzier()
+    
+    class Meta:
+        model = Credit
+        fields = '__all__'
 
 
 class CreditParcelSerializer(serializers.ModelSerializer):
