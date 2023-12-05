@@ -8,6 +8,8 @@ from rest_framework_simplejwt import authentication as authenticationJWT
 from rest_framework_simplejwt.tokens import AccessToken  # Import AccessToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from drf_spectacular.utils import extend_schema
+
 from django.contrib.auth import authenticate
 from django.db.models import Q
 from django.utils import timezone
@@ -44,7 +46,7 @@ import random
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
-
+@extend_schema(tags=['User'])
 class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         cpf = request.data.get('cpf')
@@ -108,6 +110,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         return Response(token_data, status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=['User'])
 class ManagerUserAPIView(generics.RetrieveUpdateAPIView):
     """Manage for the users"""
     serializer_class = UserSerializer
@@ -118,6 +121,7 @@ class ManagerUserAPIView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 
+@extend_schema(tags=['User'])
 class CreateUserView(generics.CreateAPIView):
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
@@ -186,7 +190,7 @@ class CreateUserView(generics.CreateAPIView):
 
         return Response(status=status.HTTP_201_CREATED)
 
-
+@extend_schema(tags=['Adress'])
 class AdressAPIView(viewsets.GenericViewSet):
     queryset = Adress.objects.all()
     serializer_class = AdressSerializer
@@ -221,7 +225,7 @@ class AdressAPIView(viewsets.GenericViewSet):
             print(error)
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-
+@extend_schema(tags=['Account'])
 class AccountAPIView(viewsets.GenericViewSet):
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
@@ -288,6 +292,7 @@ class AccountAPIView(viewsets.GenericViewSet):
             return Response({"detail": "User do not find!"}, status=status.HTTP_404_NOT_FOUND)
 
 
+@extend_schema(tags=['Transaction'])
 class TransactionAPIView(viewsets.GenericViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
@@ -456,6 +461,7 @@ class TransactionAPIView(viewsets.GenericViewSet):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
+@extend_schema(tags=['Card'])
 class CardAPIView(viewsets.GenericViewSet):
     queryset = Card.objects.all()
     serializer_class = CardSerializer
@@ -550,6 +556,7 @@ class CardAPIView(viewsets.GenericViewSet):
         return Response(status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=['Credit'])
 class CreditAPIView(viewsets.GenericViewSet):
     queryset = Credit.objects.all()
     serializer_class = CreditSerializer
@@ -622,6 +629,7 @@ class CreditAPIView(viewsets.GenericViewSet):
         return Response(serializer.data)
 
 
+@extend_schema(tags=['Credit'])
 class CreditParcelAPIView(viewsets.GenericViewSet):
     queryset = CreditParcel.objects.all()
     serializer_class = CreditParcelSerializer
@@ -701,6 +709,7 @@ class CreditParcelAPIView(viewsets.GenericViewSet):
             )
 
 
+@extend_schema(tags=['Loan'])
 class LoanAPIView(viewsets.GenericViewSet):
     queryset = Loan.objects.all()
     serializer_class = LoanSerializer
@@ -713,8 +722,8 @@ class LoanAPIView(viewsets.GenericViewSet):
         user = self.get_object()
         account = Account.objects.filter(user=user.id).first()
 
-        value_loan = request.data.get('valueLoan')
-        number_total_parcels = request.data.get('numberTotalParcels')
+        value_loan = float(request.data.get('valueLoan'))
+        number_total_parcels = int(request.data.get('numberTotalParcels'))
         observation = request.data.get('observation')
 
         value_parcel = (value_loan / number_total_parcels) * 1.05
@@ -724,7 +733,7 @@ class LoanAPIView(viewsets.GenericViewSet):
         if not user.declared_salary * 5 >= value_loan or not user.declared_salary * 0.4 >= value_parcel:
             return Response(
                 {"detail": "Your loan request was not approved."},
-                status=status.HTTP_201_CREATED
+                status=status.HTTP_400_BAD_REQUEST
             )
 
         transaction = {
@@ -779,6 +788,8 @@ class LoanAPIView(viewsets.GenericViewSet):
         serializer = LoanSerializer(loan, many=True)
         return Response(serializer.data)
 
+
+@extend_schema(tags=['Loan'])
 class LoanParcelAPIView(viewsets.GenericViewSet):
     queryset = LoanParcel.objects.all()
     serializer_class = LoanParcelSerializer
